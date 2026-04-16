@@ -1,0 +1,1242 @@
+<!DOCTYPE html>
+
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>ColeOuPasseV2</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#0a0a0a;--card:#111;--card2:#181818;--border:#252525;
+  --text:#e5e5e5;--muted:#888;--dim:#444;
+  --green:#22c55e;--yellow:#f59e0b;--red:#ef4444;
+  --purple:#a855f7;--orange:#f97316;--gold:#ffd700;
+  --w:480px;--r:14px;
+}
+html,body{min-height:100%;background:var(--bg);color:var(--text);font-family:'Courier New',Courier,monospace;transition:background .3s,color .3s;}
+body{min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:14px 12px 48px;}
+::-webkit-scrollbar{width:4px;}::-webkit-scrollbar-track{background:#1a1a1a;}::-webkit-scrollbar-thumb{background:#333;border-radius:4px;}
+.screen{display:none;width:100%;max-width:var(--w);}
+.screen.active{display:flex;flex-direction:column;align-items:stretch;}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.35}}
+@keyframes goldPulse{0%,100%{box-shadow:0 0 12px rgba(255,215,0,.35)}50%{box-shadow:0 0 26px rgba(255,215,0,.65)}}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-7px)}75%{transform:translateX(7px)}}
+@keyframes glitch{0%,100%{filter:none}50%{filter:hue-rotate(180deg) saturate(4) brightness(1.3)}}
+@keyframes fadeUp{from{opacity:0;transform:translateX(-50%) translateY(6px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+@keyframes cheatIn{from{opacity:0;transform:scale(.93)}to{opacity:1;transform:scale(1)}}
+@keyframes timerPulse{0%,100%{box-shadow:none}50%{box-shadow:0 0 10px rgba(239,68,68,.6)}}
+
+/* Cards */
+.card{width:100%;background:var(–card);border:1.5px solid #5b5ef4;border-radius:var(–r);padding:22px 18px;text-align:center;margin-top:10px;transition:background .3s,border-color .3s;}
+.card-game{width:100%;background:var(–card);border:1.5px solid var(–border);border-radius:var(–r);padding:14px 13px;position:relative;margin-top:8px;}
+
+/* Login */
+.login-icon{font-size:52px;margin-bottom:8px;}
+.login-title{font-size:20px;font-weight:900;letter-spacing:2px;color:var(–text);margin-bottom:4px;}
+.login-sub{font-size:11px;color:var(–muted);margin-bottom:18px;}
+.input-group{display:flex;flex-direction:column;gap:10px;margin-bottom:16px;}
+.input-wrap input{width:100%;background:var(–card2);border:1.5px solid var(–border);border-radius:10px;padding:11px 14px;font-size:13px;color:var(–text);font-family:‘Courier New’,monospace;outline:none;transition:border-color .2s,background .3s;}
+.input-wrap input:focus{border-color:#5b5ef4;}
+.input-wrap input::placeholder{color:var(–dim);}
+.login-btn{width:100%;background:linear-gradient(135deg,#5b5ef4,#a78bfa);border:none;border-radius:10px;padding:13px;font-size:14px;font-weight:900;color:#fff;font-family:‘Courier New’,monospace;cursor:pointer;letter-spacing:1px;transition:opacity .2s;}
+.login-btn:hover{opacity:.9;}
+.login-err{font-size:11px;color:var(–red);margin-top:8px;min-height:16px;}
+.login-hint{font-size:10px;color:var(–dim);margin-top:10px;line-height:1.7;}
+
+/* AI Badge */
+.ai-badge{display:inline-flex;align-items:center;gap:6px;background:linear-gradient(135deg,#1a0a2e,#0d1a2e);border:1px solid #5b5ef4;border-radius:20px;padding:5px 14px;font-size:10px;color:#a78bfa;font-weight:700;letter-spacing:.5px;margin-bottom:12px;}
+.ai-dot{width:6px;height:6px;border-radius:50%;background:#a78bfa;animation:blink 1.5s infinite;}
+
+/* Menu */
+.title{font-size:21px;font-weight:900;letter-spacing:3px;color:var(–text);margin-bottom:4px;}
+.sub{font-size:11px;color:var(–dim);letter-spacing:1px;margin-bottom:8px;}
+.desc{font-size:12px;color:var(–muted);line-height:1.7;margin-bottom:14px;}
+
+/* User bar */
+.user-bar{display:flex;align-items:center;gap:10px;background:var(–card2);border:1px solid var(–border);border-radius:12px;padding:8px 12px;margin-bottom:12px;}
+.avatar{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#5b5ef4,#a78bfa);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:900;color:#fff;flex-shrink:0;overflow:hidden;background-size:cover;background-position:center;}
+.user-info{flex:1;min-width:0;}
+.user-name{color:#a78bfa;font-weight:700;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.user-sub{font-size:9px;color:var(–dim);}
+.user-bar-btns{display:flex;gap:6px;flex-shrink:0;}
+.icon-btn{background:var(–card);border:1px solid var(–border);border-radius:8px;padding:5px 9px;font-size:13px;cursor:pointer;transition:background .2s;color:var(–text);}
+.icon-btn:hover{background:var(–border);}
+
+/* Level grid */
+.level-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;width:100%;}
+.level-btn{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;border:2px solid;border-radius:12px;padding:14px 10px;cursor:pointer;transition:transform .15s,box-shadow .3s;color:var(–text);font-family:‘Courier New’,monospace;background:transparent;width:100%;min-height:84px;}
+.level-btn:hover{transform:scale(1.03);}
+.level-btn:active{transform:scale(.97);}
+.level-btn.rush{grid-column:1/-1;min-height:60px;}
+.level-btn.perfect{animation:goldPulse 2s infinite;}
+.level-name{font-size:13px;font-weight:900;display:flex;align-items:center;gap:5px;flex-wrap:wrap;justify-content:center;}
+.level-desc{font-size:9.5px;color:var(–muted);line-height:1.4;text-align:center;}
+.perfect-badge{font-size:10px;font-weight:900;color:var(–gold);}
+.hint{background:var(–card2);border:1px solid var(–border);border-radius:10px;padding:10px 13px;font-size:10.5px;color:var(–muted);line-height:1.8;text-align:left;width:100%;}
+.hint b{color:var(–text);}
+
+/* Loading */
+.loading-card{width:100%;background:var(–card);border:1.5px solid #5b5ef4;border-radius:var(–r);padding:34px 22px;text-align:center;margin-top:10px;}
+.spinner{width:44px;height:44px;border:3px solid var(–border);border-top-color:#a78bfa;border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 16px;}
+.loading-title{font-size:14px;font-weight:900;color:#a78bfa;margin-bottom:7px;letter-spacing:1px;}
+.loading-sub{font-size:11px;color:var(–muted);margin-bottom:14px;}
+.loading-steps{display:flex;flex-direction:column;gap:7px;}
+.step{display:flex;align-items:center;gap:9px;background:var(–card2);border-radius:8px;padding:8px 12px;font-size:11px;color:var(–muted);border:1px solid transparent;transition:all .3s;}
+.step.active{color:#a78bfa;border-color:rgba(167,139,250,.3);animation:blink 1s infinite;}
+.step.done{color:var(–green);border-color:rgba(34,197,94,.3);}
+.step.wait{opacity:.3;}
+.step-ico{font-size:14px;flex-shrink:0;}
+
+/* Game top bar */
+.top-bar{display:flex;gap:4px;margin-bottom:9px;width:100%;}
+.top-stat{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;background:var(–card2);border-radius:9px;padding:5px 3px;min-width:0;}
+.stat-label{font-size:7.5px;color:var(–dim);letter-spacing:.4px;margin-bottom:2px;white-space:nowrap;text-transform:uppercase;}
+.stat-val{font-size:13px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;}
+
+/* Timer */
+.timer-bar{display:flex;align-items:center;gap:6px;margin-bottom:8px;}
+.timer-label{font-size:9px;color:var(–dim);min-width:46px;flex-shrink:0;}
+.timer-track{flex:1;height:6px;background:var(–card2);border-radius:99px;overflow:hidden;}
+.timer-fill{height:100%;border-radius:99px;transition:width .25s linear,background .4s;}
+.timer-num{font-size:11px;font-weight:900;min-width:28px;text-align:right;flex-shrink:0;}
+.timer-urgent{animation:timerPulse .5s infinite;}
+
+/* Susp */
+.susp-row{display:flex;align-items:center;gap:6px;margin-bottom:8px;}
+.susp-label{font-size:9px;color:var(–dim);min-width:54px;flex-shrink:0;}
+.susp-track{flex:1;height:6px;background:var(–card2);border-radius:99px;overflow:hidden;}
+.susp-fill{height:100%;border-radius:99px;transition:width .3s,background .4s;}
+.susp-pct{font-size:10px;font-weight:900;min-width:30px;text-align:right;flex-shrink:0;}
+
+/* Fiscal banner */
+.fiscal-banner{border:1px solid;border-radius:7px;padding:6px 10px;font-size:10.5px;font-weight:700;margin-bottom:8px;text-align:center;letter-spacing:.3px;transition:all .4s;}
+
+/* Dots */
+.dot-row{display:flex;gap:3px;margin-bottom:9px;justify-content:center;flex-wrap:wrap;align-items:center;}
+.dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;transition:background .3s,box-shadow .3s;}
+.dot-extra{font-size:8.5px;color:var(–dim);margin-left:3px;}
+
+/* Question */
+.q-box{background:var(–card2);border-radius:10px;padding:12px 11px;margin-bottom:9px;border-left:3px solid;}
+.q-label{font-size:8.5px;letter-spacing:.7px;margin-bottom:5px;text-transform:uppercase;}
+.q-text{font-size:13.5px;font-weight:700;line-height:1.55;color:var(–text);}
+.q-ai-tag{display:none;align-items:center;gap:4px;background:rgba(167,139,250,.12);border:1px solid rgba(167,139,250,.3);border-radius:9px;padding:2px 7px;font-size:8.5px;color:#a78bfa;font-weight:700;margin-bottom:5px;width:fit-content;}
+
+/* Options */
+.opt-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:9px;}
+.opt-btn{width:100%;min-height:50px;display:flex;align-items:center;background:var(–card2);color:var(–text);border:1.5px solid var(–border);border-radius:9px;padding:9px 8px;font-size:11.5px;font-family:‘Courier New’,monospace;font-weight:600;text-align:left;cursor:pointer;transition:border-color .15s,background .15s;line-height:1.4;word-break:break-word;hyphens:auto;}
+.opt-btn:hover:not(:disabled){border-color:var(–lvl-color,#5b5ef4);background:var(–lvl-bg,rgba(91,94,244,.1));}
+.opt-btn:disabled{cursor:default;opacity:.85;}
+.opt-btn.correct{border-color:var(–green)!important;background:#0d2414!important;color:#4ade80!important;}
+.opt-btn.wrong{border-color:var(–red)!important;background:#2a0808!important;color:#f87171!important;}
+.opt-letter{color:var(–dim);font-size:9px;margin-right:4px;flex-shrink:0;}
+
+/* Cheat */
+.cheat-zone{display:flex;flex-direction:column;align-items:center;gap:7px;min-height:52px;padding-bottom:3px;}
+.cheat-btn{color:#fbbf24;border:1.5px dashed #fbbf24;border-radius:10px;padding:8px 20px;font-size:12px;font-family:‘Courier New’,monospace;font-weight:900;letter-spacing:1px;cursor:pointer;background:#1a1200;transition:opacity .2s,background .2s;}
+.cheat-btn.open{border-style:solid;background:#231a00;}
+.cheat-btn:disabled{opacity:.35;cursor:not-allowed;}
+.cheat-card{width:100%;background:#1c1500;border:1.5px solid #f59e0b;border-radius:10px;padding:9px 16px;text-align:center;display:none;animation:cheatIn .15s ease;}
+.cheat-card.visible{display:block;}
+.cheat-warn{font-size:9px;color:#f59e0b;margin-bottom:3px;letter-spacing:1px;}
+.cheat-answer{font-size:15px;font-weight:900;color:#fbbf24;word-break:break-word;}
+.cheat-hint{font-size:9px;color:#78350f;margin-top:3px;}
+.back-btn{margin-top:10px;background:none;border:none;color:var(–dim);font-size:10px;cursor:pointer;font-family:‘Courier New’,monospace;text-decoration:underline;display:block;width:100%;text-align:center;padding:4px;}
+.back-btn:hover{color:var(–muted);}
+
+/* Toast */
+#toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:var(–card2);border:1px solid var(–border);border-radius:8px;padding:7px 16px;font-size:11.5px;font-weight:700;white-space:normal;word-break:break-word;max-width:min(86vw,400px);z-index:9999;pointer-events:none;text-align:center;display:none;animation:fadeUp .2s ease;}
+
+/* Stats / grade */
+.stats-box{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:10px 0;width:100%;}
+.stat-item{background:var(–card2);border-radius:10px;padding:9px 11px;display:flex;flex-direction:column;gap:2px;font-size:10.5px;color:var(–muted);}
+.stat-item b{color:var(–text);font-size:13px;}
+.grade-card{display:flex;gap:14px;align-items:center;justify-content:center;border:2px solid;border-radius:13px;padding:12px 20px;margin:10px auto;width:fit-content;max-width:100%;}
+.grade-letter{font-size:44px;font-weight:900;line-height:1;}
+.grade-info{display:flex;flex-direction:column;align-items:flex-start;gap:3px;}
+.grade-info span{font-size:10.5px;color:var(–muted);}
+.grade-info .grade-label{font-size:11.5px;font-weight:700;}
+.scale-wrap{display:flex;gap:3px;flex-wrap:wrap;justify-content:center;margin:7px 0 4px;width:100%;}
+.scale-item{border:1px solid;border-radius:5px;padding:2px 6px;font-size:8.5px;font-weight:700;}
+
+/* Leaderboard */
+.leaderboard-wrap{width:100%;margin:12px 0;}
+.lb-title{font-size:12px;color:#a78bfa;font-weight:900;margin-bottom:8px;display:flex;align-items:center;gap:6px;}
+.lb-table{width:100%;border-collapse:collapse;font-size:11px;}
+.lb-table th{color:var(–dim);font-size:9px;letter-spacing:.5px;padding:5px 8px;text-align:left;border-bottom:1px solid var(–border);}
+.lb-table td{padding:7px 8px;border-bottom:1px solid var(–card2);color:var(–muted);}
+.lb-table tr:hover td{background:var(–card2);}
+.lb-table tr.me td{color:var(–text);background:rgba(91,94,244,.08);}
+.lb-rank{font-weight:900;color:var(–dim);width:24px;}
+.lb-rank.gold{color:var(–gold);}
+.lb-rank.silver{color:#aaa;}
+.lb-rank.bronze{color:#cd7f32;}
+.lb-name{font-weight:700;}
+.lb-score{color:var(–green);font-weight:700;text-align:right;}
+.lb-time{color:var(–yellow);text-align:right;}
+.lb-empty{text-align:center;color:var(–dim);padding:20px;font-size:11px;}
+
+/* Gabarito */
+.gab-header{font-size:10.5px;color:var(–dim);margin:10px 0 5px;text-align:left;width:100%;}
+.gab-list{width:100%;display:flex;flex-direction:column;gap:3px;max-height:280px;overflow-y:auto;padding-right:2px;}
+.gab-row{width:100%;display:flex;gap:5px;align-items:center;padding:6px 9px;background:var(–card2);border:1px solid var(–border);border-radius:8px;cursor:pointer;font-family:‘Courier New’,monospace;transition:background .2s;text-align:left;}
+.gab-row:hover{background:var(–border);}
+.gab-row.correct-row{border-color:rgba(34,197,94,.27);}
+.gab-row.wrong-row{border-color:rgba(239,68,68,.27);}
+.gab-row.expanded{border-radius:8px 8px 0 0;}
+.gab-num{color:var(–dim);font-size:9px;min-width:22px;flex-shrink:0;}
+.gab-q{flex:1;font-size:10.5px;color:var(–muted);line-height:1.4;}
+.gab-arr{color:var(–dim);font-size:9px;flex-shrink:0;}
+.gab-ai{font-size:9px;color:#a78bfa;flex-shrink:0;}
+.gab-cheat{font-size:9px;color:#f59e0b;flex-shrink:0;}
+.gab-detail{background:var(–card);border:1px solid var(–border);border-top:none;border-radius:0 0 8px 8px;padding:6px 8px;flex-direction:column;gap:4px;display:none;}
+.gab-detail.open{display:flex;}
+.gab-opt{display:flex;gap:5px;align-items:flex-start;padding:5px 8px;border:1px solid var(–border);border-radius:7px;font-size:10.5px;color:var(–muted);background:var(–card2);word-break:break-word;}
+.gab-opt.correct-opt{border-color:var(–green)!important;background:#0d2414!important;color:#4ade80!important;}
+.gab-opt.wrong-opt{border-color:var(–red)!important;background:#2a0808!important;color:#f87171!important;}
+.gab-opt-letter{font-size:9px;min-width:14px;flex-shrink:0;margin-top:1px;}
+.gab-opt-tag{font-size:9px;font-weight:700;margin-left:auto;flex-shrink:0;white-space:nowrap;}
+
+/* Settings */
+.cfg-section{background:var(–card2);border:1px solid var(–border);border-radius:12px;padding:14px;margin-bottom:12px;text-align:left;}
+.cfg-title{font-size:11px;color:var(–dim);letter-spacing:.5px;text-transform:uppercase;margin-bottom:10px;font-weight:700;}
+.cfg-row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px;}
+.cfg-label{font-size:12px;color:var(–muted);}
+.cfg-val{font-size:12px;font-weight:700;color:var(–text);}
+.avatar-cfg{width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,#5b5ef4,#a78bfa);display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:900;color:#fff;margin:0 auto 10px;overflow:hidden;background-size:cover;background-position:center;cursor:pointer;border:2px solid #5b5ef4;}
+.photo-btns{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:4px;}
+.photo-btn{background:var(–card);border:1px solid var(–border);border-radius:8px;padding:7px 14px;font-size:11px;color:var(–muted);cursor:pointer;font-family:‘Courier New’,monospace;transition:background .2s;}
+.photo-btn:hover{background:var(–border);color:var(–text);}
+.theme-btn{width:100%;background:linear-gradient(135deg,#2a2a2a,#333);border:1px solid var(–border);border-radius:10px;padding:12px;font-size:13px;font-weight:700;color:var(–text);font-family:‘Courier New’,monospace;cursor:pointer;transition:background .2s;}
+.theme-btn:hover{background:var(–border);}
+.pass-form{display:flex;flex-direction:column;gap:8px;}
+.pass-err{font-size:11px;color:var(–red);min-height:14px;}
+.cfg-input{width:100%;background:var(–card);border:1.5px solid var(–border);border-radius:9px;padding:9px 12px;font-size:12px;color:var(–text);font-family:‘Courier New’,monospace;outline:none;transition:border-color .2s;}
+.cfg-input:focus{border-color:#5b5ef4;}
+.cfg-save-btn{background:linear-gradient(135deg,#5b5ef4,#a78bfa);border:none;border-radius:9px;padding:10px;font-size:12px;font-weight:900;color:#fff;font-family:‘Courier New’,monospace;cursor:pointer;}
+.danger-btn{background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.3);border-radius:9px;padding:10px;font-size:12px;font-weight:700;color:var(–red);font-family:‘Courier New’,monospace;cursor:pointer;width:100%;}
+.danger-btn:hover{background:rgba(239,68,68,.2);}
+.back-settings-btn{background:none;border:none;color:var(–dim);font-size:11px;cursor:pointer;font-family:‘Courier New’,monospace;text-decoration:underline;display:block;text-align:center;margin-top:6px;padding:4px;}
+
+/* Buttons */
+.btn{color:#fff;border:none;border-radius:10px;padding:11px 20px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:‘Courier New’,monospace;transition:transform .1s,opacity .1s;}
+.btn:hover{opacity:.88;}
+.btn:active{transform:scale(.97);}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:13px;}
+.win-icon{font-size:48px;margin-bottom:5px;}
+.perfect-title{color:var(–gold);font-size:15px;font-weight:900;letter-spacing:2px;margin-bottom:4px;}
+.gameover-icon{font-size:58px;}
+.shaking{animation:shake .4s ease;}
+.glitching{animation:glitch .35s ease;}
+</style>
+
+</head>
+<body>
+
+<!-- LOGIN -->
+
+<div id="screen-login" class="screen active">
+  <div class="card">
+    <div class="login-icon">🎓</div>
+    <div class="login-title">COLE OU PASSE</div>
+    <div class="login-sub">Entre ou crie sua conta para jogar</div>
+    <div class="ai-badge"><div class="ai-dot"></div>✦ IA Anthropic + Web Search</div>
+    <div class="input-group">
+      <div class="input-wrap"><input type="text" id="login-name" placeholder="Nome de usuário (ex: João)" maxlength="20" autocomplete="off"/></div>
+      <div class="input-wrap"><input type="password" id="login-pass" placeholder="Senha (mín. 4 caracteres)" maxlength="30" autocomplete="off"/></div>
+    </div>
+    <button class="login-btn" onclick="doLogin()">🚀 ENTRAR / CADASTRAR</button>
+    <div class="login-err" id="login-err"></div>
+    <div class="login-hint">Primeiro acesso cria conta automaticamente.<br>Nomes são insensíveis a maiúsculas/minúsculas.<br>Dados salvos no navegador deste dispositivo.</div>
+  </div>
+</div>
+
+<!-- MENU -->
+
+<div id="screen-menu" class="screen">
+  <div class="card">
+    <div style="font-size:44px;margin-bottom:5px">📝</div>
+    <div class="title">COLE OU PASSE</div>
+    <div class="sub">Simulador de Desonestidade Acadêmica™</div>
+    <div class="user-bar">
+      <div class="avatar" id="avatar-menu"></div>
+      <div class="user-info">
+        <div class="user-name" id="user-display"></div>
+        <div class="user-sub">✦ IA + Web Search ativo</div>
+      </div>
+      <div class="user-bar-btns">
+        <button class="icon-btn" onclick="openSettings()" title="Configurações">⚙️</button>
+        <button class="icon-btn" onclick="doLogout()" title="Sair">🚪</button>
+      </div>
+    </div>
+    <div class="ai-badge"><div class="ai-dot"></div>✦ Questões geradas em tempo real com busca na web</div>
+    <div class="desc">Responda sem ser pego pelo fiscal.<br>60s por questão. 100% = <b style="color:var(--gold)">★ PERFECT</b>!</div>
+    <div class="level-grid" id="level-grid"></div>
+    <div class="hint">
+      <b>📋 VER COLA</b> → abre a resposta. Clique de novo para fechar.<br>
+      Se o fiscal te ver com a cola aberta, a suspeita sobe. 100% = reprovado!<br>
+      <b>⏱ 60s</b> por questão — esgotou = errou!<br>
+      <span style="color:var(--gold)">★ Perfect</span> = 100% de acerto.<br>
+      <span style="color:var(--orange)">⚡ Rush:</span> 60 questões, máx. 15 colas, sem timer fixo.
+    </div>
+  </div>
+</div>
+
+<!-- SETTINGS -->
+
+<div id="screen-settings" class="screen">
+  <div class="card" style="border-color:#5b5ef4">
+    <div class="title" style="font-size:18px">⚙️ Configurações</div>
+    <div class="sub" style="margin-bottom:16px">Personalize sua conta</div>
+
+```
+<!-- Perfil -->
+<div class="cfg-section">
+  <div class="cfg-title">👤 Perfil</div>
+  <div class="avatar-cfg" id="avatar-cfg" onclick="document.getElementById('photo-input').click()"></div>
+  <div class="photo-btns">
+    <button class="photo-btn" onclick="document.getElementById('photo-input').click()">📷 Escolher foto</button>
+    <button class="photo-btn" onclick="savePhoto(null);updateAvatarUI()">🗑 Remover foto</button>
+  </div>
+  <input type="file" id="photo-input" accept="image/png,image/jpeg,image/jpg,image/webp,image/gif" style="display:none" onchange="handlePhotoUpload(event)"/>
+  <div class="cfg-row" style="margin-top:8px">
+    <span class="cfg-label">Nome de usuário</span>
+    <span class="cfg-val" id="cfg-name"></span>
+  </div>
+</div>
+
+<!-- Tema -->
+<div class="cfg-section">
+  <div class="cfg-title">🎨 Aparência</div>
+  <button class="theme-btn" id="theme-toggle-btn" onclick="toggleTheme()">☀️ Mudar para Modo Claro</button>
+</div>
+
+<!-- Senha -->
+<div class="cfg-section">
+  <div class="cfg-title">🔒 Alterar Senha</div>
+  <div class="pass-form">
+    <input class="cfg-input" type="password" id="cfg-cur-pass" placeholder="Senha atual" maxlength="30"/>
+    <input class="cfg-input" type="password" id="cfg-new-pass" placeholder="Nova senha (mín. 4 caracteres)" maxlength="30"/>
+    <button class="cfg-save-btn" onclick="changePassword()">💾 Salvar nova senha</button>
+    <div class="pass-err" id="cfg-pass-err"></div>
+  </div>
+</div>
+
+<!-- Perigo -->
+<div class="cfg-section" style="border-color:rgba(239,68,68,.2)">
+  <div class="cfg-title" style="color:var(--red)">⚠️ Conta</div>
+  <button class="danger-btn" onclick="doLogout()">🚪 Sair da conta</button>
+</div>
+
+<button class="back-settings-btn" onclick="renderMenu()">← Voltar ao Menu</button>
+```
+
+  </div>
+</div>
+
+<!-- LOADING -->
+
+<div id="screen-loading" class="screen">
+  <div class="loading-card">
+    <div class="spinner"></div>
+    <div class="loading-title">✦ IA GERANDO QUESTÕES</div>
+    <div class="loading-sub" id="loading-text">Preparando sua prova personalizada...</div>
+    <div class="loading-steps">
+      <div class="step active" id="step-0"><span class="step-ico">🔍</span>Buscando temas na internet...</div>
+      <div class="step wait"   id="step-1"><span class="step-ico">🧠</span>Gerando questões com IA...</div>
+      <div class="step wait"   id="step-2"><span class="step-ico">✅</span>Validando respostas...</div>
+      <div class="step wait"   id="step-3"><span class="step-ico">🚀</span>Prova pronta!</div>
+    </div>
+  </div>
+</div>
+
+<!-- JOGO -->
+
+<div id="screen-game" class="screen">
+  <div class="card-game" id="game-wrap">
+    <div class="top-bar">
+      <div class="top-stat"><div class="stat-label">Nível</div><div class="stat-val" id="stat-nivel"></div></div>
+      <div class="top-stat"><div class="stat-label">Questão</div><div class="stat-val" id="stat-questao"></div></div>
+      <div class="top-stat"><div class="stat-label">Pontos</div><div class="stat-val" id="stat-pontos" style="color:var(--green)">0</div></div>
+      <div class="top-stat" id="stat-colas-wrap" style="display:none"><div class="stat-label">Colas</div><div class="stat-val" id="stat-colas"></div></div>
+      <div class="top-stat"><div class="stat-label">Fiscal</div><div class="stat-val" id="stat-fiscal">😐</div></div>
+    </div>
+    <div class="timer-bar" id="timer-bar">
+      <div class="timer-label">⏱ TEMPO</div>
+      <div class="timer-track"><div class="timer-fill" id="timer-fill" style="width:100%;background:var(--green)"></div></div>
+      <div class="timer-num" id="timer-num" style="color:var(--green)">60s</div>
+    </div>
+    <div class="susp-row">
+      <div class="susp-label">SUSPEITA</div>
+      <div class="susp-track"><div class="susp-fill" id="susp-fill" style="width:0%;background:var(--green)"></div></div>
+      <div class="susp-pct" id="susp-pct" style="color:var(--green)">0%</div>
+    </div>
+    <div class="fiscal-banner" id="fiscal-banner" style="background:rgba(34,197,94,0.07);border-color:#1a3d26;color:#4ade80">✅ Fiscal distraído — seguro agora</div>
+    <div class="dot-row" id="dot-row"></div>
+    <div class="q-box" id="q-box">
+      <div class="q-ai-tag" id="q-ai-tag">✦ IA + Web</div>
+      <div class="q-label" id="q-label"></div>
+      <div class="q-text" id="q-text"></div>
+    </div>
+    <div class="opt-grid" id="opt-grid"></div>
+    <div class="cheat-zone">
+      <button class="cheat-btn" id="cheat-btn" onclick="toggleCheat()">📋 VER COLA</button>
+      <div class="cheat-card" id="cheat-card">
+        <div class="cheat-warn">⚠️ COLA ABERTA — FECHE RÁPIDO</div>
+        <div class="cheat-answer" id="cheat-answer"></div>
+        <div class="cheat-hint">Clique em 🙈 para esconder</div>
+      </div>
+    </div>
+    <button class="back-btn" onclick="goMenu()">← Sair da Prova</button>
+  </div>
+</div>
+
+<!-- GAME OVER -->
+
+<div id="screen-gameover" class="screen">
+  <div class="card" style="border-color:var(--red)">
+    <div class="gameover-icon">😡</div>
+    <div class="title" style="color:var(--red);margin-top:8px">REPROVADO!</div>
+    <div style="color:#f87171;margin:8px 0 12px;font-size:12px">O fiscal te flagrou com a cola!</div>
+    <div class="stats-box" id="go-stats"></div>
+    <div class="btn-row">
+      <button class="btn" style="background:var(--red)" onclick="retryGame()">🔄 Tentar Novamente</button>
+      <button class="btn" style="background:#2a2a2a" onclick="goMenu()">🏠 Menu</button>
+    </div>
+  </div>
+</div>
+
+<!-- WIN -->
+
+<div id="screen-win" class="screen">
+  <div class="card" id="win-card">
+    <div class="win-icon" id="win-icon">🎓</div>
+    <div class="title" id="win-title" style="color:var(--green)">PROVA CONCLUÍDA!</div>
+    <div class="perfect-title" id="perfect-line" style="display:none">★ PERFECT SCORE ★</div>
+    <div id="grade-card-wrap"></div>
+    <div class="scale-wrap" id="scale-wrap"></div>
+    <div class="stats-box" id="win-stats"></div>
+    <div class="leaderboard-wrap">
+      <div class="lb-title">🏆 Ranking Global — <span id="lb-level-label"></span></div>
+      <table class="lb-table">
+        <thead><tr><th>#</th><th>Jogador</th><th style="text-align:right">Pts</th><th style="text-align:right">Tempo</th></tr></thead>
+        <tbody id="lb-body"></tbody>
+      </table>
+    </div>
+    <div class="gab-header">📋 Gabarito — clique para ver alternativas</div>
+    <div class="gab-list" id="gab-list"></div>
+    <div class="btn-row">
+      <button class="btn" id="win-retry-btn" style="background:var(--green)" onclick="retryGame()">🔄 Jogar Novamente</button>
+      <button class="btn" style="background:#2a2a2a" onclick="goMenu()">🏠 Menu</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+<script>
+
+// ════════════════════════════════════════════════════════════
+// UTILS
+// ════════════════════════════════════════════════════════════
+function shuffle(arr){const a=[…arr];for(let i=a.length-1;i>0;i–){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+function shuffleOpts(q){return{…q,o:shuffle(q.o)};}
+function escH(s){return String(s).replace(/&/g,’&’).replace(/</g,’<’).replace(/>/g,’>’).replace(/”/g,’"’);}
+function delay(ms){return new Promise(r=>setTimeout(r,ms));}
+function fmtTime(ms){const s=Math.round(ms/1000);return s<60?s+‘s’:Math.floor(s/60)+‘m’+String(s%60).padStart(2,‘0’)+‘s’;}
+function normName(n){return n.trim().toLowerCase();}
+function usGrade(pct){
+if(pct===100)return{letter:‘A+’,gpa:‘4.0’,color:’#ffd700’,label:‘Perfect Score!’};
+if(pct>=93)return{letter:‘A’,gpa:‘4.0’,color:’#22c55e’,label:‘Excellent’};
+if(pct>=90)return{letter:‘A\u2212’,gpa:‘3.7’,color:’#22c55e’,label:‘Excellent’};
+if(pct>=87)return{letter:‘B+’,gpa:‘3.3’,color:’#86efac’,label:‘Above Average’};
+if(pct>=83)return{letter:‘B’,gpa:‘3.0’,color:’#86efac’,label:‘Good’};
+if(pct>=80)return{letter:‘B\u2212’,gpa:‘2.7’,color:’#86efac’,label:‘Good’};
+if(pct>=77)return{letter:‘C+’,gpa:‘2.3’,color:’#f59e0b’,label:‘Average’};
+if(pct>=73)return{letter:‘C’,gpa:‘2.0’,color:’#f59e0b’,label:‘Average’};
+if(pct>=70)return{letter:‘C\u2212’,gpa:‘1.7’,color:’#f59e0b’,label:‘Below Average’};
+if(pct>=67)return{letter:‘D+’,gpa:‘1.3’,color:’#ef4444’,label:‘Passing (barely)’};
+if(pct>=63)return{letter:‘D’,gpa:‘1.0’,color:’#ef4444’,label:‘Passing (barely)’};
+if(pct>=60)return{letter:‘D\u2212’,gpa:‘0.7’,color:’#ef4444’,label:‘Passing (barely)’};
+return{letter:‘F’,gpa:‘0.0’,color:’#7f1d1d’,label:‘Failed’};
+}
+
+// ════════════════════════════════════════════════════════════
+// TEMA (dia / noite)
+// ════════════════════════════════════════════════════════════
+const THEME_KEY=‘cop_theme’;
+function applyTheme(t){
+const r=document.documentElement;
+if(t===‘light’){
+r.style.setProperty(’–bg’,’#f0f0f0’);
+r.style.setProperty(’–card’,’#ffffff’);
+r.style.setProperty(’–card2’,’#e8e8e8’);
+r.style.setProperty(’–border’,’#cccccc’);
+r.style.setProperty(’–text’,’#111111’);
+r.style.setProperty(’–muted’,’#555555’);
+r.style.setProperty(’–dim’,’#888888’);
+} else {
+r.style.setProperty(’–bg’,’#0a0a0a’);
+r.style.setProperty(’–card’,’#111111’);
+r.style.setProperty(’–card2’,’#181818’);
+r.style.setProperty(’–border’,’#252525’);
+r.style.setProperty(’–text’,’#e5e5e5’);
+r.style.setProperty(’–muted’,’#888888’);
+r.style.setProperty(’–dim’,’#444444’);
+}
+// Update scrollbar for light theme
+const style=document.getElementById(‘scrollbar-style’)||document.createElement(‘style’);
+style.id=‘scrollbar-style’;
+style.textContent=t===‘light’?’::-webkit-scrollbar-track{background:#ddd}::-webkit-scrollbar-thumb{background:#aaa}’:’’;
+document.head.appendChild(style);
+}
+function getTheme(){return localStorage.getItem(THEME_KEY)||‘dark’;}
+function setTheme(t){localStorage.setItem(THEME_KEY,t);applyTheme(t);}
+function toggleTheme(){setTheme(getTheme()===‘dark’?‘light’:‘dark’);renderSettings();}
+
+// ════════════════════════════════════════════════════════════
+// AUTH — case-insensitive, photo de perfil
+// ════════════════════════════════════════════════════════════
+const AUTH_KEY=‘cop_users’;
+const SESSION_KEY=‘cop_session’;
+
+function getUsers(){try{return JSON.parse(localStorage.getItem(AUTH_KEY)||’{}’);}catch{return {};}}
+function saveUsers(u){localStorage.setItem(AUTH_KEY,JSON.stringify(u));}
+function getSession(){return localStorage.getItem(SESSION_KEY)||null;}
+function saveSession(key){localStorage.setItem(SESSION_KEY,key);}
+function clearSession(){localStorage.removeItem(SESSION_KEY);}
+
+// Returns the canonical key (lowercased) for a display name
+function userKey(name){return normName(name);}
+
+function doLogin(){
+const rawName=document.getElementById(‘login-name’).value.trim();
+const pass=document.getElementById(‘login-pass’).value;
+const err=document.getElementById(‘login-err’);
+err.textContent=’’;
+if(rawName.length<2){err.textContent=‘Nome deve ter ao menos 2 caracteres.’;return;}
+if(pass.length<4){err.textContent=‘Senha deve ter ao menos 4 caracteres.’;return;}
+const users=getUsers();
+const key=userKey(rawName);
+if(users[key]){
+if(users[key].pass!==btoa(unescape(encodeURIComponent(pass)))){err.textContent=‘Senha incorreta.’;return;}
+} else {
+users[key]={displayName:rawName,pass:btoa(unescape(encodeURIComponent(pass))),perfects:{},photo:null,created:Date.now()};
+saveUsers(users);
+}
+saveSession(key);
+G.currentUser=key;
+G.displayName=users[key].displayName||rawName;
+G.perfects=users[key].perfects||{};
+renderMenu();
+}
+
+function doLogout(){
+clearSession();
+G.currentUser=null;G.displayName=null;
+stopTimers();stopQTimer();
+showScreen(‘login’);
+}
+
+function loadUserSession(){
+const key=getSession();if(!key)return false;
+const users=getUsers();if(!users[key])return false;
+G.currentUser=key;
+G.displayName=users[key].displayName||key;
+G.perfects=users[key].perfects||{};
+return true;
+}
+
+function savePerfect(nivel){
+const users=getUsers();
+if(users[G.currentUser]){
+users[G.currentUser].perfects=users[G.currentUser].perfects||{};
+users[G.currentUser].perfects[nivel]=true;
+saveUsers(users);
+}
+}
+
+function savePhoto(dataUrl){
+const users=getUsers();
+if(users[G.currentUser]){users[G.currentUser].photo=dataUrl;saveUsers(users);}
+G.photo=dataUrl;
+updateAvatarUI();
+}
+
+function getPhoto(){
+const users=getUsers();
+return users[G.currentUser]?users[G.currentUser].photo||null:null;
+}
+
+function changePassword(){
+const cur=document.getElementById(‘cfg-cur-pass’).value;
+const nw=document.getElementById(‘cfg-new-pass’).value;
+const err=document.getElementById(‘cfg-pass-err’);
+err.textContent=’’;
+const users=getUsers();
+const u=users[G.currentUser];
+if(!u){err.textContent=‘Usuário não encontrado.’;return;}
+if(u.pass!==btoa(unescape(encodeURIComponent(cur)))){err.textContent=‘Senha atual incorreta.’;return;}
+if(nw.length<4){err.textContent=‘Nova senha deve ter ao menos 4 caracteres.’;return;}
+u.pass=btoa(unescape(encodeURIComponent(nw)));
+saveUsers(users);
+err.style.color=‘var(–green)’;err.textContent=‘Senha alterada com sucesso! ✓’;
+document.getElementById(‘cfg-cur-pass’).value=’’;
+document.getElementById(‘cfg-new-pass’).value=’’;
+setTimeout(()=>{err.textContent=’’;err.style.color=‘var(–red)’;},2500);
+}
+
+function updateAvatarUI(){
+const photo=getPhoto();
+[‘avatar-menu’,‘avatar-cfg’].forEach(id=>{
+const el=document.getElementById(id);
+if(!el)return;
+if(photo){el.style.backgroundImage=`url(${photo})`;el.style.backgroundSize=‘cover’;el.style.backgroundPosition=‘center’;el.textContent=’’;}
+else{el.style.backgroundImage=’’;el.textContent=(G.displayName||G.currentUser||’?’)[0].toUpperCase();}
+});
+}
+
+// ════════════════════════════════════════════════════════════
+// LEADERBOARD
+// ════════════════════════════════════════════════════════════
+const LB_KEY=‘cop_leaderboard’;
+function getLB(){try{return JSON.parse(localStorage.getItem(LB_KEY)||’{}’);}catch{return {};}}
+function saveLB(lb){localStorage.setItem(LB_KEY,JSON.stringify(lb));}
+
+function addLBEntry(nivel,score,timeMs,pct){
+const lb=getLB();
+if(!lb[nivel])lb[nivel]=[];
+lb[nivel].push({name:G.displayName||G.currentUser,score,timeMs,pct,date:Date.now()});
+lb[nivel].sort((a,b)=>b.score-a.score||(a.timeMs-b.timeMs));
+lb[nivel]=lb[nivel].slice(0,20);
+saveLB(lb);
+}
+
+function renderLeaderboard(nivel,myScore,myTime){
+const lb=getLB();
+const entries=lb[nivel]||[];
+document.getElementById(‘lb-level-label’).textContent=CONFIG[nivel]?CONFIG[nivel].label:nivel;
+const tbody=document.getElementById(‘lb-body’);tbody.innerHTML=’’;
+if(!entries.length){tbody.innerHTML=’<tr><td colspan="4" class="lb-empty">Nenhuma pontuação ainda. Seja o primeiro! 🏆</td></tr>’;return;}
+entries.forEach((e,i)=>{
+const isMe=e.name===(G.displayName||G.currentUser)&&Math.abs(e.score-myScore)<1&&Math.abs(e.timeMs-myTime)<5000;
+const tr=document.createElement(‘tr’);if(isMe)tr.className=‘me’;
+const rk=i===0?‘🥇’:i===1?‘🥈’:i===2?‘🥉’:’#’+(i+1);
+const rkClass=i===0?‘gold’:i===1?‘silver’:i===2?‘bronze’:’’;
+tr.innerHTML=`<td class="lb-rank ${rkClass}">${rk}</td><td class="lb-name">${escH(e.name)}${isMe?' <span style="color:#a78bfa;font-size:9px">(você)</span>':''}</td><td class="lb-score">${e.score}</td><td class="lb-time">${fmtTime(e.timeMs)}</td>`;
+tbody.appendChild(tr);
+});
+}
+
+// ════════════════════════════════════════════════════════════
+// SETTINGS SCREEN
+// ════════════════════════════════════════════════════════════
+function openSettings(){renderSettings();showScreen(‘settings’);}
+
+function renderSettings(){
+const el=document.getElementById(‘cfg-name’);if(el)el.textContent=G.displayName||G.currentUser;
+updateAvatarUI();
+const t=getTheme();
+const btn=document.getElementById(‘theme-toggle-btn’);
+if(btn){btn.textContent=t===‘dark’?‘☀️ Mudar para Modo Claro’:‘🌙 Mudar para Modo Escuro’;}
+const err=document.getElementById(‘cfg-pass-err’);
+if(err){err.textContent=’’;err.style.color=‘var(–red)’;}
+}
+
+function handlePhotoUpload(e){
+const file=e.target.files[0];
+if(!file)return;
+if(!file.type.match(/image/(png|jpeg|jpg|webp|gif)/i)&&!file.type.match(/application/pdf/i)){
+alert(‘Use uma imagem PNG, JPG, WEBP ou GIF.’);return;
+}
+const reader=new FileReader();
+reader.onload=ev=>{
+let dataUrl=ev.target.result;
+// If PDF, we can’t display it as image — reject
+if(file.type.match(/pdf/i)){alert(‘PDFs não podem ser usados como foto de perfil. Use uma imagem.’);return;}
+// Resize image for storage
+const img=new Image();
+img.onload=()=>{
+const canvas=document.createElement(‘canvas’);
+const MAX=200;
+let w=img.width,h=img.height;
+if(w>h){if(w>MAX){h=h*(MAX/w);w=MAX;}}else{if(h>MAX){w=w*(MAX/h);h=MAX;}}
+canvas.width=w;canvas.height=h;
+canvas.getContext(‘2d’).drawImage(img,0,0,w,h);
+savePhoto(canvas.toDataURL(‘image/jpeg’,0.8));
+};
+img.src=dataUrl;
+};
+reader.readAsDataURL(file);
+}
+
+const CONFIG={
+facil: {label:‘Fácil’, emoji:’\u{1F60A}’,color:’#22c55e’,bg:‘rgba(34,197,94,0.10)’, suspGain:18,suspGainNoCheat:8, decayRate:0.6, fiscalMin:5000,fiscalExtra:3500,lookDuration:1500,pts:{clean:10,cheat:5},qtd:10,desc:‘1\u00ba\u20135\u00ba ano \u2022 10 quest\u00f5es \u2022 60s/quest\u00e3o’},
+medio: {label:‘M\u00e9dio’, emoji:’\u{1F610}’,color:’#f59e0b’,bg:‘rgba(245,158,11,0.10)’,suspGain:30,suspGainNoCheat:15,decayRate:0.3, fiscalMin:3200,fiscalExtra:2000,lookDuration:1900,pts:{clean:10,cheat:5},qtd:10,desc:‘6\u00ba\u20139\u00ba ano \u2022 10 quest\u00f5es \u2022 60s/quest\u00e3o’},
+dificil:{label:‘Dif\u00edcil’,emoji:’\u{1F628}’,color:’#ef4444’,bg:‘rgba(239,68,68,0.10)’, suspGain:50,suspGainNoCheat:25,decayRate:0.1, fiscalMin:2000,fiscalExtra:1200,lookDuration:2200,pts:{clean:10,cheat:5},qtd:15,desc:‘1\u00ba\u20133\u00ba EM \u2022 15 quest\u00f5es \u2022 60s/quest\u00e3o’},
+ultra: {label:‘Ultra’,  emoji:’\u{1F480}’,color:’#a855f7’,bg:‘rgba(168,85,247,0.10)’,suspGain:65,suspGainNoCheat:35,decayRate:0.05,fiscalMin:1500,fiscalExtra:800, lookDuration:2500,pts:{clean:10,cheat:3},qtd:15,desc:‘Superior \u2022 15 quest\u00f5es \u2022 60s/quest\u00e3o’},
+rush:  {label:‘Rush’,   emoji:’\u26A1’,color:’#f97316’,bg:‘rgba(249,115,22,0.10)’,suspGain:35,suspGainNoCheat:18,decayRate:0.2, fiscalMin:2500,fiscalExtra:1500,lookDuration:2000,pts:{clean:10,cheat:4},qtd:60,desc:‘Todos os n\u00edveis \u2022 60 quest\u00f5es \u2022 M\u00e1x. 15 colas’,maxCheats:15,noTimer:true},
+};
+const LEVEL_ORDER=[‘facil’,‘medio’,‘dificil’,‘ultra’,‘rush’];
+const QUESTION_TIME=60; // segundos por questão (exceto rush)
+
+// ════════════════════════════════════════════════════════════
+// AI PROMPTS
+// ════════════════════════════════════════════════════════════
+
+const AI_PROMPTS={
+facil:(n)=>`Você é professor do 1º ao 5º ano do EF brasileiro. Gere exatamente ${n} questões de múltipla escolha INÉDITAS em português. Matérias variadas: Matemática, Português, Ciências, História, Geografia do Brasil. Use busca na web para incluir curiosidades e fatos recentes adequados para crianças. REGRAS OBRIGATÓRIAS: exatamente 4 alternativas. A string em "a" deve ser IDÊNTICA a uma das strings em "o". Varie temas. Responda SOMENTE com JSON válido sem markdown: {"questions":[{"q":"pergunta","a":"resposta exata","o":["op1","op2","op3","op4"]}]}`,
+
+medio:(n)=>`Você é professor do 6º ao 9º ano do EF brasileiro. Gere exatamente ${n} questões INÉDITAS em português. Matérias: Matemática, Ciências, História, Geografia, Inglês, Português. Use busca na web para contexto atual. REGRAS: 4 alternativas. "a" IDÊNTICO a uma das "o". Varie matérias. Responda SOMENTE com JSON válido sem markdown: {"questions":[{"q":"pergunta","a":"resposta exata","o":["op1","op2","op3","op4"]}]}`,
+
+dificil:(n)=>`Você é professor do EM brasileiro (ENEM/vestibular). Gere exatamente ${n} questões INÉDITAS em português. Matérias: Matemática, Física, Química, Biologia, História, Geografia, Literatura, Filosofia. Use busca na web para questões atuais estilo ENEM. REGRAS: 4 alternativas. "a" IDÊNTICO a uma das "o". Nível ENEM. Responda SOMENTE com JSON válido sem markdown: {"questions":[{"q":"pergunta","a":"resposta exata","o":["op1","op2","op3","op4"]}]}`,
+
+ultra:(n)=>`Você é professor universitário de exatas. Gere exatamente ${n} questões de nível superior INÉDITAS em português. Matérias: Cálculo, Álgebra Linear, Física, Química Orgânica, Probabilidade, Algoritmos. Use busca na web para aplicações recentes. REGRAS: 4 alternativas. "a" IDÊNTICO a uma das "o". Nível graduação. Responda SOMENTE com JSON válido sem markdown: {"questions":[{"q":"pergunta","a":"resposta exata","o":["op1","op2","op3","op4"]}]}`,
+
+rush:(n)=>`Você é professor polivalente. Gere exatamente ${n} questões VARIADAS de múltipla escolha em português. MIX de dificuldades: fácil, médio, difícil, muito difícil. Matérias variadas + atualidades. Use busca na web para questões atuais. REGRAS: 4 alternativas. "a" IDÊNTICO a uma das "o". Grande variedade. Responda SOMENTE com JSON válido sem markdown: {"questions":[{"q":"pergunta","a":"resposta exata","o":["op1","op2","op3","op4"]}]}`,
+};
+
+// ════════════════════════════════════════════════════════════
+// FALLBACK BANCO
+// ════════════════════════════════════════════════════════════
+const FALLBACK={
+facil:[
+{q:“Quanto é 3+4?”,a:“7”,o:[“5”,“6”,“7”,“8”]},
+{q:“Quanto é 5×2?”,a:“10”,o:[“7”,“9”,“10”,“12”]},
+{q:“Quantos lados tem um triângulo?”,a:“3”,o:[“2”,“3”,“4”,“5”]},
+{q:“Capital do Brasil?”,a:“Brasília”,o:[“São Paulo”,“Brasília”,“Rio de Janeiro”,“Salvador”]},
+{q:“Quanto é 8+7?”,a:“15”,o:[“13”,“14”,“15”,“16”]},
+{q:“Qual animal produz mel?”,a:“Abelha”,o:[“Vespa”,“Abelha”,“Formiga”,“Borboleta”]},
+{q:“Quantas vogais tem o alfabeto?”,a:“5”,o:[“4”,“5”,“6”,“7”]},
+{q:“Quanto é 12÷3?”,a:“4”,o:[“3”,“4”,“5”,“6”]},
+{q:“Satélite natural da Terra?”,a:“Lua”,o:[“Sol”,“Lua”,“Marte”,“Plutão”]},
+{q:“Plural de ‘pão’?”,a:“Pães”,o:[“Pãos”,“Pões”,“Pães”,“Paens”]},
+{q:“Quanto é 9×8?”,a:“72”,o:[“63”,“70”,“72”,“81”]},
+{q:“Maior planeta do sistema solar?”,a:“Júpiter”,o:[“Saturno”,“Júpiter”,“Marte”,“Terra”]},
+{q:“Quanto é 50+25?”,a:“75”,o:[“65”,“70”,“75”,“80”]},
+{q:“Estado sólido da água?”,a:“Gelo”,o:[“Vapor”,“Chuva”,“Gelo”,“Névoa”]},
+{q:“Quantos estados tem o Brasil?”,a:“26”,o:[“24”,“25”,“26”,“27”]},
+],
+medio:[
+{q:“15% de 200?”,a:“30”,o:[“20”,“25”,“30”,“35”]},
+{q:“MMC de 4 e 6?”,a:“12”,o:[“8”,“10”,“12”,“24”]},
+{q:“Fórmula da água?”,a:“H₂O”,o:[“CO₂”,“H₂O”,“NaCl”,“O₂”]},
+{q:“2x+6=14. x=?”,a:“4”,o:[“3”,“4”,“5”,“6”]},
+{q:“√144=?”,a:“12”,o:[“11”,“12”,“13”,“14”]},
+{q:“Passado de ‘go’ em inglês?”,a:“Went”,o:[“Goed”,“Goes”,“Went”,“Gone”]},
+{q:“Proclamação da República no Brasil?”,a:“15 de novembro de 1889”,o:[“7/9/1822”,“13/5/1888”,“15/11/1889”,“1/1/1900”]},
+{q:“Maior continente?”,a:“Ásia”,o:[“América”,“África”,“Ásia”,“Europa”]},
+{q:”(−5)²=?”,a:“25”,o:[“−25”,“−10”,“10”,“25”]},
+{q:“MDC de 12 e 18?”,a:“6”,o:[“3”,“4”,“6”,“9”]},
+],
+dificil:[
+{q:“log₁₀(1000)=?”,a:“3”,o:[“2”,“3”,“4”,“10”]},
+{q:“Derivada de x³?”,a:“3x²”,o:[“x²”,“2x”,“3x²”,“3x³”]},
+{q:“sen(90°)=?”,a:“1”,o:[“0”,“1”,“√2/2”,“√3/2”]},
+{q:“Lei de Ohm?”,a:“V=R×I”,o:[“V=R+I”,“V=R×I”,“V=R/I”,“V=I/R”]},
+{q:“Número atômico=?”,a:“Quantidade de prótons no núcleo”,o:[“Nêutrons”,“Massa do átomo”,“Quantidade de prótons no núcleo”,“Elétrons externos”]},
+{q:“O que é pH?”,a:“Escala que mede acidez ou basicidade”,o:[“Pressão hidrostática”,“Escala que mede acidez ou basicidade”,“Potencial elétrico”,“Ponto de fusão”]},
+{q:“O que é o DNA?”,a:“Molécula que carrega informação genética”,o:[“Proteína do núcleo”,“Molécula que carrega informação genética”,“Enzima digestiva”,“Lipídio da membrana”]},
+{q:“C(5,2)=?”,a:“10”,o:[“5”,“8”,“10”,“20”]},
+{q:“Quem escreveu Dom Casmurro?”,a:“Machado de Assis”,o:[“José de Alencar”,“Machado de Assis”,“Eça de Queirós”,“Lima Barreto”]},
+{q:“1ª Lei da Termodinâmica?”,a:“ΔU=Q−W”,o:[“Q=mcΔT”,“ΔU=Q−W”,“W=Fd cosθ”,“ΔS>0”]},
+{q:“cos(60°)=?”,a:“1/2”,o:[“√3/2”,“1/2”,“0”,“1”]},
+{q:“Fórmula H₂SO₄?”,a:“Ácido sulfúrico”,o:[“Ácido clorídrico”,“Ácido sulfúrico”,“Ácido fosfórico”,“Ácido nítrico”]},
+{q:“Energia cinética?”,a:“Ec=½mv²”,o:[“Ec=mv”,“Ec=mgh”,“Ec=½mv²”,“Ec=mv²”]},
+{q:“Ligação covalente?”,a:“Compartilhamento de elétrons”,o:[“Transferência de elétrons”,“Atração entre íons”,“Compartilhamento de elétrons”,“Ligação metálica”]},
+{q:“Função das mitocôndrias?”,a:“Produção de ATP”,o:[“Síntese proteica”,“Produção de ATP”,“Digestão intracelular”,“Transporte”]},
+],
+ultra:[
+{q:“∫eˣdx=?”,a:“eˣ+C”,o:[“eˣ⁺¹/(x+1)+C”,“eˣ+C”,“xeˣ+C”,“ln(eˣ)+C”]},
+{q:“Derivada de ln(x)?”,a:“1/x”,o:[“ln(x)/x”,“1/x”,“x·ln(x)”,“1/ln(x)”]},
+{q:“lim(1+1/n)ⁿ quando n→∞?”,a:“e≈2,718”,o:[“1”,“2”,“e≈2,718”,“∞”]},
+{q:“Det [[1,2],[3,4]]?”,a:“−2”,o:[“2”,“−2”,“10”,“−10”]},
+{q:“P(A∪B)=?”,a:“P(A)+P(B)−P(A∩B)”,o:[“P(A)×P(B)”,“P(A)+P(B)”,“P(A)+P(B)−P(A∩B)”,“P(A∩B)/P(B)”]},
+{q:“Equação de Schrödinger?”,a:“Ĥψ=Eψ”,o:[“F=ma”,“Ĥψ=Eψ”,“E=mc²”,“∇²ψ=0”]},
+{q:“ΔG de Gibbs?”,a:“ΔG=ΔH−TΔS”,o:[“ΔG=ΔU+PΔV”,“ΔG=ΔH−TΔS”,“ΔG=ΔS/T”,“ΔG=Q/T”]},
+{q:“Arrhenius: k=?”,a:“Ae^(−Ea/RT)”,o:[“ΔH−TΔS”,“Ae^(−Ea/RT)”,“−log[H⁺]”,“nRT/V”]},
+{q:“Variância de X?”,a:“E[X²]−(E[X])²”,o:[“E[X]”,“E[X²]−(E[X])²”,“E[(X−μ)²]”,“√(E[X²])”]},
+{q:“Bayes: P(A|B)=?”,a:“P(B|A)·P(A)/P(B)”,o:[“P(A∩B)/P(A)”,“P(B|A)·P(A)/P(B)”,“P(A)+P(B)”,“P(B)/P(A)”]},
+{q:“∫₀^π sen(x)dx=?”,a:“2”,o:[“0”,“1”,“2”,“π”]},
+{q:“∫1/x dx=?”,a:“ln|x|+C”,o:[“x⁻²+C”,“ln|x|+C”,“1/x²+C”,“eˣ+C”]},
+{q:“dy/dx=y → solução?”,a:“y=Ceˣ”,o:[“y=Cx”,“y=Ceˣ”,“y=C+eˣ”,“y=ln(x)+C”]},
+{q:“O(n log n) típico de?”,a:“Merge Sort / algoritmos de ordenação eficientes”,o:[“Busca binária”,“Merge Sort / algoritmos de ordenação eficientes”,“Percurso em grafo”,“Força bruta”]},
+{q:“Normal padrão: μ e σ?”,a:“μ=0,σ=1”,o:[“μ=1,σ=0”,“μ=0,σ=1”,“μ=0,σ=0”,“μ=1,σ=1”]},
+],
+};
+function getFallbackRush(qtd){const all=[…FALLBACK.facil,…FALLBACK.medio,…FALLBACK.dificil,…FALLBACK.ultra];return shuffle(all).slice(0,qtd).map(shuffleOpts);}
+
+// ════════════════════════════════════════════════════════════
+// LOADING STEPS
+// ════════════════════════════════════════════════════════════
+function setStep(i,s){const el=document.getElementById(‘step-’+i);if(el)el.className=’step ’+s;}
+
+// ════════════════════════════════════════════════════════════
+// IA — Anthropic API + web_search
+// ════════════════════════════════════════════════════════════
+async function gerarQuestoesIA(nivel,qtd){
+setStep(0,‘active’);
+await delay(400);
+let raw=’’;
+try{
+const resp=await fetch(‘https://api.anthropic.com/v1/messages’,{
+method:‘POST’,
+headers:{‘Content-Type’:‘application/json’},
+body:JSON.stringify({
+model:‘claude-sonnet-4-20250514’,
+max_tokens:8000,
+tools:[{type:‘web_search_20250305’,name:‘web_search’}],
+messages:[{role:‘user’,content:AI_PROMPTS[nivel](qtd)}],
+}),
+});
+if(!resp.ok) throw new Error(‘HTTP ‘+resp.status);
+const data=await resp.json();
+raw=(data.content||[]).filter(b=>b.type===‘text’).map(b=>b.text).join(’’);
+}catch(e){console.warn(‘API failed:’,e);return null;}
+
+setStep(0,‘done’);setStep(1,‘active’);
+await delay(300);
+
+let questoes=null;
+try{
+const clean=raw.replace(/`json\s*/gi,'').replace(/`\s*/g,’’).trim();
+const m=clean.match(/{[\s\S]*}/);
+if(!m) throw new Error(‘no JSON’);
+const parsed=JSON.parse(m[0]);
+questoes=parsed.questions||parsed.questoes||parsed;
+if(!Array.isArray(questoes)) throw new Error(‘not array’);
+}catch(e){console.warn(‘Parse failed:’,e);return null;}
+
+setStep(1,‘done’);setStep(2,‘active’);
+await delay(300);
+
+const validas=[];
+for(const q of questoes){
+if(!q||typeof q.q!==‘string’||typeof q.a!==‘string’||!Array.isArray(q.o)||q.o.length<4) continue;
+const aN=q.a.trim();
+const oN=q.o.map(o=>String(o).trim());
+let fi=oN.indexOf(aN);
+if(fi===-1){fi=oN.findIndex(o=>o.toLowerCase()===aN.toLowerCase());if(fi!==-1)q.a=oN[fi];else{q.o[0]=aN;q.o=shuffle(q.o);}}
+const uniq=[…new Set(q.o.map(o=>String(o).trim()))];
+while(uniq.length<4) uniq.push(’—’);
+q.o=uniq.slice(0,4);
+validas.push({q:q.q.trim(),a:q.a.trim(),o:q.o,ai:true});
+if(validas.length>=qtd) break;
+}
+
+setStep(2,‘done’);setStep(3,‘active’);
+await delay(200);
+
+if(validas.length<Math.ceil(qtd*0.5)){console.warn(‘Too few valid:’,validas.length);return null;}
+const final=validas.map(q=>({…q,o:shuffle(q.o)}));
+if(final.length<qtd){
+const need=qtd-final.length;
+const fb=nivel===‘rush’?getFallbackRush(need):shuffle(FALLBACK[nivel]||FALLBACK.facil).slice(0,need).map(shuffleOpts);
+final.push(…fb);
+}
+setStep(3,‘done’);
+await delay(150);
+return final.slice(0,qtd);
+}
+
+// ════════════════════════════════════════════════════════════
+
+// ESTADO
+// ════════════════════════════════════════════════════════════
+let G={
+phase:‘login’,nivel:null,questions:[],qIdx:0,score:0,suspicion:0,
+fiscalLooking:false,cheatOpen:false,cheatUsed:false,cheatTotal:0,
+cheatCount:0,correctCount:0,history:[],answering:false,answerResult:null,
+eyeState:‘normal’,perfects:{},aiGenerated:false,
+currentUser:null,
+gameStartTime:0,totalGameTime:0,
+};
+let fiscalTimer=null,decayTimer=null,toastTimer=null,qTimer=null;
+function cfg(){return G.nivel?CONFIG[G.nivel]:null;}
+
+// ════════════════════════════════════════════════════════════
+// NAVEGAÇÃO
+// ════════════════════════════════════════════════════════════
+function showScreen(id){
+document.querySelectorAll(’.screen’).forEach(s=>s.classList.remove(‘active’));
+const el=document.getElementById(‘screen-’+id);if(el)el.classList.add(‘active’);
+window.scrollTo(0,0);
+}
+
+// ════════════════════════════════════════════════════════════
+// MENU
+// ════════════════════════════════════════════════════════════
+function renderMenu(){
+document.getElementById(‘user-display’).textContent=G.currentUser||’’;
+const grid=document.getElementById(‘level-grid’);grid.innerHTML=’’;
+LEVEL_ORDER.forEach(key=>{
+const c=CONFIG[key],isPerfect=G.perfects[key],isRush=key===‘rush’;
+const btn=document.createElement(‘button’);
+btn.className=‘level-btn’+(isRush?’ rush’:’’)+(isPerfect?’ perfect’:’’);
+btn.style.borderColor=isPerfect?‘var(–gold)’:c.color;
+btn.style.background=isPerfect?‘rgba(255,215,0,0.08)’:c.bg;
+btn.innerHTML=`<div class="level-name"><span>${c.emoji}</span><span style="color:${isPerfect?'var(--gold)':c.color}">${c.label}</span>${isPerfect?'<span class="perfect-badge">★ PERFECT</span>':''}</div><div class="level-desc" style="color:${isPerfect?'#d4af37':'var(--muted)'}">${c.desc}</div>${isRush?'<div style="font-size:9px;color:var(--orange);font-weight:700;margin-top:2px">⚡ Mix total \u2022 M\u00e1x. 15 colas</div>':''}`;
+btn.onclick=()=>startGame(key);
+grid.appendChild(btn);
+});
+showScreen(‘menu’);
+}
+function goMenu(){stopTimers();stopQTimer();G.phase=‘menu’;renderMenu();}
+
+// ════════════════════════════════════════════════════════════
+// INICIAR JOGO
+// ════════════════════════════════════════════════════════════
+async function startGame(nivel){
+stopTimers();stopQTimer();
+const names={facil:‘Fácil’,medio:‘Médio’,dificil:‘Difícil’,ultra:‘Ultra’,rush:‘Rush’};
+const lt=document.getElementById(‘loading-text’);
+if(lt) lt.textContent=‘Gerando prova de ‘+names[nivel]+’ com IA e busca na web…’;
+setStep(0,‘active’);setStep(1,‘wait’);setStep(2,‘wait’);setStep(3,‘wait’);
+showScreen(‘loading’);
+
+let questions=null,aiOk=false;
+try{questions=await gerarQuestoesIA(nivel,CONFIG[nivel].qtd);aiOk=questions!==null;}catch(e){console.warn(‘IA err:’,e);}
+if(!aiOk){
+questions=nivel===‘rush’?getFallbackRush(CONFIG[nivel].qtd):shuffle(FALLBACK[nivel]||FALLBACK.facil).slice(0,CONFIG[nivel].qtd).map(shuffleOpts);
+showToast(‘⚠️ Usando banco local (IA indisponível)’,‘warn’,3000);
+}
+
+G={…G,phase:‘game’,nivel,questions,qIdx:0,score:0,suspicion:0,
+fiscalLooking:false,cheatOpen:false,cheatUsed:false,cheatTotal:0,
+cheatCount:0,correctCount:0,history:[],answering:false,answerResult:null,
+eyeState:‘normal’,aiGenerated:aiOk,gameStartTime:Date.now(),totalGameTime:0};
+
+showScreen(‘game’);renderGame();startTimers();
+if(!CONFIG[nivel].noTimer) startQTimer();
+}
+function retryGame(){startGame(G.nivel);}
+
+// ════════════════════════════════════════════════════════════
+// TIMER DE QUESTÃO (60s)
+// ════════════════════════════════════════════════════════════
+let qTimeLeft=QUESTION_TIME;
+
+function startQTimer(){
+stopQTimer();
+const c=cfg();
+if(c&&c.noTimer){
+const tb=document.getElementById(‘timer-bar’);if(tb)tb.style.display=‘none’;
+return;
+}
+document.getElementById(‘timer-bar’).style.display=‘flex’;
+qTimeLeft=QUESTION_TIME;
+updateTimerUI();
+qTimer=setInterval(()=>{
+if(G.phase!==‘game’||G.answering) return;
+qTimeLeft–;
+updateTimerUI();
+if(qTimeLeft<=0){
+clearInterval(qTimer);qTimer=null;
+timeOut();
+}
+},1000);
+}
+function stopQTimer(){clearInterval(qTimer);qTimer=null;}
+
+function updateTimerUI(){
+const pct=(qTimeLeft/QUESTION_TIME)*100;
+const color=qTimeLeft>30?‘var(–green)’:qTimeLeft>10?‘var(–yellow)’:‘var(–red)’;
+const fill=document.getElementById(‘timer-fill’);
+const num=document.getElementById(‘timer-num’);
+const bar=document.getElementById(‘timer-bar’);
+if(fill){fill.style.width=pct+’%’;fill.style.background=color;}
+if(num){num.textContent=qTimeLeft+‘s’;num.style.color=color;}
+if(bar){
+if(qTimeLeft<=10&&!bar.classList.contains(‘timer-urgent’)) bar.classList.add(‘timer-urgent’);
+else if(qTimeLeft>10) bar.classList.remove(‘timer-urgent’);
+}
+}
+
+function timeOut(){
+const c2=cfg();if(!c2||c2.noTimer)return;
+if(G.answering||G.phase!==‘game’) return;
+const q=G.questions[G.qIdx];
+G.answerResult={chosen:null,correct:false,answer:q.a};
+G.cheatOpen=false;G.answering=true;
+document.getElementById(‘cheat-card’).classList.remove(‘visible’);
+G.history.push({q:q.q,chosen:null,correct:false,answer:q.a,used:G.cheatUsed,options:q.o,ai:!!q.ai,timeout:true});
+updateCounters();renderOptions();updateCheatBtn();
+showToast(’⏱ Tempo esgotado! Era: ’+escH(q.a),‘danger’,2000);
+setTimeout(()=>{
+G.answerResult=null;G.cheatUsed=false;G.cheatOpen=false;G.answering=false;
+const c=cfg();
+if(G.qIdx+1>=c.qtd) endGame(‘complete’,G.correctCount);
+else{G.qIdx++;renderGame();if(!c.noTimer) startQTimer();}
+},2000);
+}
+
+// ════════════════════════════════════════════════════════════
+// TIMERS (fiscal + decay)
+// ════════════════════════════════════════════════════════════
+function startTimers(){
+const c=cfg();
+const schedule=()=>{fiscalTimer=setTimeout(()=>{doFiscalLook();if(G.phase===‘game’)schedule();},c.fiscalMin+Math.random()*c.fiscalExtra);};
+schedule();
+decayTimer=setInterval(()=>{if(G.phase!==‘game’)return;G.suspicion=Math.max(0,G.suspicion-c.decayRate);updateSuspBar();},300);
+}
+function stopTimers(){clearTimeout(fiscalTimer);clearInterval(decayTimer);fiscalTimer=decayTimer=null;}
+
+// ════════════════════════════════════════════════════════════
+// FISCAL
+// ════════════════════════════════════════════════════════════
+function doFiscalLook(){
+if(G.phase!==‘game’)return;const c=cfg();
+G.fiscalLooking=true;G.eyeState=‘looking’;updateFiscalUI();triggerGlitch();
+setTimeout(()=>{
+if(G.phase!==‘game’)return;
+if(G.cheatOpen){
+G.suspicion=Math.min(100,G.suspicion+c.suspGain);updateSuspBar();
+if(G.suspicion>=100){G.eyeState=‘caught’;updateFiscalUI();endGame(‘caught’);}
+else{G.eyeState=‘suspicious’;updateFiscalUI();showToast(‘⚠️ O fiscal te viu com a cola!’,‘danger’,1600);triggerShake();setTimeout(()=>{G.eyeState=‘normal’;updateFiscalUI();},1500);}
+}else{G.eyeState=‘normal’;updateFiscalUI();}
+G.fiscalLooking=false;updateFiscalBanner();
+},c.lookDuration);
+}
+
+// ════════════════════════════════════════════════════════════
+// RENDER JOGO
+// ════════════════════════════════════════════════════════════
+function renderGame(){
+const c=cfg(),q=G.questions[G.qIdx],isRush=G.nivel===‘rush’;
+const sn=document.getElementById(‘stat-nivel’);sn.textContent=c.emoji+’ ‘+c.label;sn.style.color=c.color;sn.style.fontSize=‘11px’;
+const cw=document.getElementById(‘stat-colas-wrap’);
+if(isRush){cw.style.display=‘flex’;const left=c.maxCheats-G.cheatTotal;const sc=document.getElementById(‘stat-colas’);sc.textContent=left;sc.style.color=left===0?‘var(–red)’:‘var(–yellow)’;}
+else cw.style.display=‘none’;
+const gw=document.getElementById(‘game-wrap’);gw.style.setProperty(’–lvl-color’,c.color);gw.style.setProperty(’–lvl-bg’,c.bg);
+updateCounters();updateSuspBar();updateFiscalUI();updateFiscalBanner();
+const qBox=document.getElementById(‘q-box’);qBox.style.borderColor=c.color+‘55’;
+const ql=document.getElementById(‘q-label’);ql.textContent=`Questão ${G.qIdx+1} — ${c.label}`;ql.style.color=c.color;
+document.getElementById(‘q-text’).textContent=q?q.q:’’;
+const aitag=document.getElementById(‘q-ai-tag’);if(aitag)aitag.style.display=(q&&q.ai)?‘inline-flex’:‘none’;
+document.getElementById(‘cheat-answer’).textContent=‘→ ‘+(q?q.a:’’);
+document.getElementById(‘cheat-card’).classList.remove(‘visible’);
+renderDots();renderOptions();updateCheatBtn();
+}
+
+function updateCounters(){
+const c=cfg();
+document.getElementById(‘stat-questao’).innerHTML=`${G.qIdx+1}<span style="color:var(--dim)">/${c.qtd}</span>`;
+document.getElementById(‘stat-pontos’).textContent=G.score;
+}
+
+function renderDots(){
+const c=cfg(),row=document.getElementById(‘dot-row’);row.innerHTML=’’;
+const max=Math.min(c.qtd,40);
+for(let i=0;i<max;i++){
+const d=document.createElement(‘div’);d.className=‘dot’;
+if(i<G.qIdx) d.style.background=‘var(–green)’;
+else if(i===G.qIdx){d.style.background=c.color;d.style.boxShadow=`0 0 6px ${c.color}`;}
+else d.style.background=’#252525’;
+row.appendChild(d);
+}
+if(c.qtd>40){const sp=document.createElement(‘span’);sp.className=‘dot-extra’;sp.textContent=`+${c.qtd-40}`;row.appendChild(sp);}
+}
+
+function renderOptions(){
+const c=cfg(),q=G.questions[G.qIdx];
+const grid=document.getElementById(‘opt-grid’);grid.innerHTML=’’;
+if(!q)return;
+[‘A’,‘B’,‘C’,‘D’].forEach((letter,i)=>{
+const opt=q.o[i];
+const btn=document.createElement(‘button’);btn.className=‘opt-btn’;btn.disabled=G.answering;
+if(G.answering&&G.answerResult){
+if(opt===G.answerResult.answer) btn.classList.add(‘correct’);
+else if(opt===G.answerResult.chosen) btn.classList.add(‘wrong’);
+}
+btn.innerHTML=`<span class="opt-letter">${letter}</span>${escH(opt||'—')}`;
+if(!G.answering){
+btn.addEventListener(‘mouseover’,()=>{if(!btn.classList.contains(‘correct’)&&!btn.classList.contains(‘wrong’)){btn.style.borderColor=c.color;btn.style.background=c.bg;}});
+btn.addEventListener(‘mouseout’,()=>{if(!btn.classList.contains(‘correct’)&&!btn.classList.contains(‘wrong’)){btn.style.borderColor=’#2a2a2a’;btn.style.background=’#1c1c1c’;}});
+}
+btn.onclick=()=>answer(opt);
+grid.appendChild(btn);
+});
+}
+
+function updateSuspBar(){const pct=Math.min(100,G.suspicion);const color=pct<40?‘var(–green)’:pct<70?‘var(–yellow)’:‘var(–red)’;const f=document.getElementById(‘susp-fill’);const p=document.getElementById(‘susp-pct’);if(f){f.style.width=pct+’%’;f.style.background=color;}if(p){p.textContent=Math.round(pct)+’%’;p.style.color=color;}}
+function updateFiscalUI(){const map={normal:‘😐’,looking:‘👀’,suspicious:‘🤨’,caught:‘😡’};const el=document.getElementById(‘stat-fiscal’);if(el)el.textContent=map[G.eyeState]||‘😐’;}
+function updateFiscalBanner(){const b=document.getElementById(‘fiscal-banner’);if(!b)return;if(G.fiscalLooking){b.style.background=‘rgba(239,68,68,0.14)’;b.style.borderColor=‘var(–red)’;b.style.color=’#fca5a5’;b.textContent=‘👁️ CUIDADO — FISCAL OLHANDO!’;}else{b.style.background=‘rgba(34,197,94,0.07)’;b.style.borderColor=’#1a3d26’;b.style.color=’#4ade80’;b.textContent=‘✅ Fiscal distraído — seguro agora’;}}
+
+function updateCheatBtn(){
+const c=cfg(),btn=document.getElementById(‘cheat-btn’);if(!btn)return;
+const cheatsLeft=c.maxCheats!=null?c.maxCheats-G.cheatTotal:null;
+const disabled=G.answering||(G.cheatUsed&&!G.cheatOpen)||(cheatsLeft===0&&!G.cheatOpen);
+btn.disabled=disabled;btn.style.opacity=disabled?‘0.35’:‘1’;btn.style.cursor=disabled?‘not-allowed’:‘pointer’;
+if(G.cheatOpen){btn.textContent=‘🙈 ESCONDER COLA’;btn.classList.add(‘open’);}
+else{btn.textContent=‘📋 VER COLA’+(G.nivel===‘rush’&&cheatsLeft!=null?` (${cheatsLeft} left)`:’’);btn.classList.remove(‘open’);}
+}
+
+// ════════════════════════════════════════════════════════════
+// COLA
+// ════════════════════════════════════════════════════════════
+function toggleCheat(){
+if(G.answering)return;const c=cfg();
+const cheatsLeft=c.maxCheats!=null?c.maxCheats-G.cheatTotal:null;
+if(!G.cheatOpen){
+if(G.cheatUsed)return;
+if(cheatsLeft===0){showToast(‘🚫 Limite de ‘+c.maxCheats+’ colas atingido!’,‘danger’);return;}
+if(G.fiscalLooking){G.suspicion=Math.min(100,G.suspicion+c.suspGainNoCheat);updateSuspBar();if(G.suspicion>=100){endGame(‘caught’);return;}showToast(‘🚨 Fiscal olhando! Não deu!’,‘danger’);triggerShake();return;}
+G.cheatOpen=true;G.cheatUsed=true;G.cheatCount++;G.cheatTotal++;
+const rem=c.maxCheats!=null?c.maxCheats-G.cheatTotal:null;
+showToast(rem!=null?`📋 Cola! (${rem} restantes)`:‘📋 Cola aberta!’,‘warn’,2000);
+}else G.cheatOpen=false;
+document.getElementById(‘cheat-card’).classList.toggle(‘visible’,G.cheatOpen);
+updateCheatBtn();
+if(G.nivel===‘rush’){const left=CONFIG.rush.maxCheats-G.cheatTotal;const sc=document.getElementById(‘stat-colas’);if(sc){sc.textContent=left;sc.style.color=left===0?‘var(–red)’:‘var(–yellow)’;}}
+}
+
+// ════════════════════════════════════════════════════════════
+// RESPOSTA
+// ════════════════════════════════════════════════════════════
+function answer(opt){
+if(G.answering)return;
+stopQTimer();
+const c=cfg(),q=G.questions[G.qIdx];
+const correct=opt===q.a;
+const pts=correct?(G.cheatUsed?c.pts.cheat:c.pts.clean):0;
+const newCorrect=correct?G.correctCount+1:G.correctCount;
+G.answerResult={chosen:opt,correct,answer:q.a};G.cheatOpen=false;G.answering=true;
+document.getElementById(‘cheat-card’).classList.remove(‘visible’);
+if(correct){G.score+=pts;G.correctCount=newCorrect;}
+G.history.push({q:q.q,chosen:opt,correct,answer:q.a,used:G.cheatUsed,options:q.o,ai:!!q.ai});
+updateCounters();renderOptions();updateCheatBtn();
+showToast(correct?`✅ Correto! +${pts} pts`:`❌ Errou! Era: ${escH(q.a)}`,correct?‘ok’:‘danger’,2000);
+setTimeout(()=>{
+G.answerResult=null;G.cheatUsed=false;G.cheatOpen=false;G.answering=false;
+if(G.qIdx+1>=c.qtd) endGame(‘complete’,newCorrect);
+else{G.qIdx++;renderGame();if(!c.noTimer) startQTimer();}
+},2000);
+}
+
+// ════════════════════════════════════════════════════════════
+// FIM DO JOGO
+// ════════════════════════════════════════════════════════════
+function endGame(reason,finalCorrect){
+stopTimers();stopQTimer();
+const c=cfg();const correct=finalCorrect!=null?finalCorrect:G.correctCount;
+G.totalGameTime=Date.now()-G.gameStartTime;
+const pct=Math.round((correct/c.qtd)*100);
+if(reason===‘complete’&&pct===100){G.perfects[G.nivel]=true;savePerfect(G.nivel);}
+G.phase=reason===‘caught’?‘gameover’:‘win’;
+if(reason===‘caught’){renderGameOver();showScreen(‘gameover’);}
+else{
+addLBEntry(G.nivel,G.score,G.totalGameTime,pct);
+renderWin(correct);showScreen(‘win’);
+}
+}
+
+function renderGameOver(){
+const c=cfg();
+document.getElementById(‘go-stats’).innerHTML=` <div class="stat-item"><span>Nível</span><b style="color:${c.color}">${c.label}</b></div> <div class="stat-item"><span>Pontuação</span><b>${G.score}</b></div> <div class="stat-item"><span>Questões</span><b>${G.qIdx}/${c.qtd}</b></div> <div class="stat-item"><span>Acertos</span><b>${G.correctCount}</b></div>`;
+}
+
+function renderWin(correct){
+const c=cfg(),qtd=c.qtd,maxScore=qtd*10;
+const pct=Math.round((correct/qtd)*100);
+const g=usGrade(pct),isPerfect=pct===100;
+const wc=document.getElementById(‘win-card’);
+wc.style.borderColor=isPerfect?‘var(–gold)’:‘var(–green)’;
+wc.style.boxShadow=isPerfect?‘0 0 28px rgba(255,215,0,0.45)’:‘none’;
+document.getElementById(‘win-icon’).textContent=isPerfect?‘🏆’:‘🎓’;
+document.getElementById(‘win-title’).style.color=isPerfect?‘var(–gold)’:‘var(–green)’;
+document.getElementById(‘win-title’).textContent=‘PROVA CONCLUÍDA!’;
+document.getElementById(‘perfect-line’).style.display=isPerfect?‘block’:‘none’;
+document.getElementById(‘grade-card-wrap’).innerHTML=` <div class="grade-card" style="border-color:${g.color};background:${g.color}18"> <div class="grade-letter" style="color:${g.color}">${g.letter}</div> <div class="grade-info"> <span>GPA: <b style="color:${g.color}">${g.gpa}</b></span> <span>Score: <b style="color:${g.color}">${pct}%</b></span> <span class="grade-label" style="color:${g.color}">${g.label}</span> </div> </div>`;
+const scales=[{r:‘A+ (100%)’,min:100,c:’#ffd700’},{r:‘A (93–99%)’,min:93,c:’#22c55e’},{r:‘B (80–89%)’,min:80,c:’#86efac’},{r:‘C (70–79%)’,min:70,c:’#f59e0b’},{r:‘D (60–69%)’,min:60,c:’#ef4444’},{r:‘F (<60%)’,min:0,c:’#7f1d1d’}];
+document.getElementById(‘scale-wrap’).innerHTML=scales.map(s=>`<div class="scale-item" style="border-color:${s.c}55;background:${pct>=s.min?s.c+'33':'#1a1a1a'}"><span style="color:${s.c}">${s.r}</span></div>`).join(’’);
+const aiCount=G.history.filter(h=>h.ai).length;
+document.getElementById(‘win-stats’).innerHTML=` <div class="stat-item"><span>Nível</span><b style="color:${c.color}">${c.label}</b></div> <div class="stat-item"><span>Pontuação</span><b>${G.score}/${maxScore}</b></div> <div class="stat-item"><span>Acertos</span><b>${correct}/${qtd} (${pct}%)</b></div> <div class="stat-item"><span>Tempo total</span><b style="color:var(--yellow)">${fmtTime(G.totalGameTime)}</b></div> <div class="stat-item"><span>Colas usadas</span><b>${G.cheatCount}${c.maxCheats?'/'+c.maxCheats:''}</b></div> <div class="stat-item"><span>Fonte</span><b style="color:#a78bfa">${aiCount>0?'✦ IA ('+aiCount+' questões)':'📦 Banco local'}</b></div>`;
+document.getElementById(‘win-retry-btn’).style.background=isPerfect?’#b8860b’:‘var(–green)’;
+renderLeaderboard(G.nivel,G.score,G.totalGameTime);
+renderGabarito();
+}
+
+function renderGabarito(){
+const list=document.getElementById(‘gab-list’);list.innerHTML=’’;
+G.history.forEach((h,i)=>{
+const wrap=document.createElement(‘div’);
+const row=document.createElement(‘button’);
+row.className=‘gab-row ‘+(h.correct?‘correct-row’:‘wrong-row’);
+const timeoutTag=h.timeout?’<span class="gab-ai" title="Tempo esgotado">⏱</span>’:’’;
+const aiTag=h.ai?’<span class="gab-ai" title="IA">✦</span>’:’’;
+row.innerHTML=`<span class="gab-num">Q${i+1}</span><span class="gab-q">${escH(h.q)}</span>${aiTag}${timeoutTag}<span>${h.correct?'✅':'❌'}</span>${h.used?'<span class="gab-cheat">🅲</span>':''}<span class="gab-arr">▼</span>`;
+const detail=document.createElement(‘div’);detail.className=‘gab-detail’;
+const letters=[‘A’,‘B’,‘C’,‘D’];
+h.options.forEach((opt,oi)=>{
+const isC=opt===h.answer,isW=opt===h.chosen&&!isC;
+const d=document.createElement(‘div’);d.className=‘gab-opt’+(isC?’ correct-opt’:isW?’ wrong-opt’:’’);
+d.innerHTML=`<span class="gab-opt-letter">${letters[oi]}</span><span style="flex:1">${escH(opt)}</span>${isC?'<span class="gab-opt-tag">✓ Correta</span>':''}${isW?'<span class="gab-opt-tag">✗ Sua resposta</span>':''}`;
+detail.appendChild(d);
+});
+row.onclick=()=>{const open=detail.classList.contains(‘open’);detail.classList.toggle(‘open’,!open);row.classList.toggle(‘expanded’,!open);const arr=row.querySelector(’.gab-arr’);if(arr)arr.textContent=open?‘▼’:‘▲’;};
+wrap.appendChild(row);wrap.appendChild(detail);list.appendChild(wrap);
+});
+}
+
+// ════════════════════════════════════════════════════════════
+// EFEITOS
+// ════════════════════════════════════════════════════════════
+function triggerShake(){const gw=document.getElementById(‘game-wrap’);if(!gw)return;gw.classList.add(‘shaking’);setTimeout(()=>gw.classList.remove(‘shaking’),500);}
+function triggerGlitch(){const gw=document.getElementById(‘game-wrap’);if(!gw)return;gw.classList.add(‘glitching’);setTimeout(()=>gw.classList.remove(‘glitching’),350);}
+function showToast(text,type,ms=1800){
+clearTimeout(toastTimer);const t=document.getElementById(‘toast’);if(!t)return;
+const colors={ok:‘var(–green)’,danger:‘var(–red)’,warn:‘var(–yellow)’,info:’#6366f1’};
+t.textContent=text;t.style.color=colors[type]||‘var(–text)’;t.style.borderColor=colors[type]||’#333’;t.style.display=‘block’;
+toastTimer=setTimeout(()=>{t.style.display=‘none’;},ms);
+}
+
+// ════════════════════════════════════════════════════════════
+// ENTER KEY no login
+// ════════════════════════════════════════════════════════════
+[‘login-name’,‘login-pass’].forEach(id=>{
+const el=document.getElementById(id);
+if(el) el.addEventListener(‘keydown’,e=>{if(e.key===‘Enter’) doLogin();});
+});
+
+// ════════════════════════════════════════════════════════════
+// INIT
+// ════════════════════════════════════════════════════════════
+if(loadUserSession()) renderMenu();
+else showScreen(‘login’);
+
+// ════ PATCH renderMenu ════
+const _origRenderMenu = typeof renderMenu === ‘function’ ? renderMenu : null;
+function renderMenu(){
+document.getElementById(‘user-display’).textContent = G.displayName || G.currentUser || ‘’;
+updateAvatarUI();
+const grid = document.getElementById(‘level-grid’);
+grid.innerHTML = ‘’;
+LEVEL_ORDER.forEach(key => {
+const c = CONFIG[key], isPerfect = G.perfects[key], isRush = key === ‘rush’;
+const btn = document.createElement(‘button’);
+btn.className = ‘level-btn’ + (isRush?’ rush’:’’) + (isPerfect?’ perfect’:’’);
+btn.style.borderColor = isPerfect ? ‘var(–gold)’ : c.color;
+btn.style.background = isPerfect ? ‘rgba(255,215,0,0.08)’ : c.bg;
+btn.innerHTML = `<div class="level-name"><span>${c.emoji}</span><span style="color:${isPerfect?'var(--gold)':c.color}">${c.label}</span>${isPerfect?'<span class="perfect-badge">★ PERFECT</span>':''}</div><div class="level-desc" style="color:${isPerfect?'#d4af37':'var(--muted)'}">${c.desc}</div>${isRush?'<div style="font-size:9px;color:var(--orange);font-weight:700;margin-top:2px">⚡ Mix total • Máx. 15 colas</div>':''}`;
+btn.onclick = () => startGame(key);
+grid.appendChild(btn);
+});
+showScreen(‘menu’);
+}
+function goMenu(){stopTimers();stopQTimer();G.phase=‘menu’;renderMenu();}
+
+// ════ ENTER KEY no login ════
+[‘login-name’,‘login-pass’].forEach(id=>{
+const el=document.getElementById(id);
+if(el) el.addEventListener(‘keydown’,e=>{if(e.key===‘Enter’)doLogin();});
+});
+
+// ════ INIT ════
+applyTheme(getTheme());
+if(loadUserSession()) renderMenu();
+else showScreen(‘login’);
+</script>
+
+</body>
+</html>
